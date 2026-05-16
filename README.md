@@ -45,13 +45,32 @@ RESEND_API_KEY=re_...
 - **Tavily API Key**: Sign up at [tavily.com](https://tavily.com/) (free tier available)
 - **Resend API Key**: Sign up at [resend.com](https://resend.com/) (optional — only needed for email)
 
-### 3. Install dependencies
+### 3. Customize your profile
+
+Edit `config/default_profile.json` before the first run. This file seeds your consultant profile:
+
+- **name**: Your full name
+- **website**: Your website URL
+- **linkedin**: Your LinkedIn profile URL
+- **professional_summary**: A paragraph describing your consulting practice
+- **services**: List of services you offer (used for matching and outreach)
+- **target_sectors**: Industries you serve (used for scoring relevance)
+- **change_signals**: Types of organizational changes that indicate a need for your services
+- **exclusions**: Categories to skip (e.g., too-small companies, irrelevant industries)
+- **past_clients**: Organizations to exclude from results (your existing clients)
+- **search_keywords_he**: Hebrew search terms for finding relevant news
+- **search_keywords_en**: English search terms
+- **preferred_language**: `"he"` for Hebrew (RTL) or `"en"` for English
+
+All of these can also be edited later in the app via Search Settings and Client Profile pages.
+
+### 4. Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Run the application
+### 5. Run the application
 
 ```bash
 streamlit run app.py
@@ -63,7 +82,7 @@ The app will open in your browser at `http://localhost:8501`.
 
 On the first run, the app will:
 - Create a local database (`business_helper.db`)
-- Load the default client profile with pre-configured search settings
+- Load your profile from `config/default_profile.json`
 - Show the main search page
 
 To run your first search:
@@ -75,6 +94,8 @@ To run your first search:
 
 - **Bilingual UI**: Toggle between Hebrew (RTL) and English
 - **Multi-client**: Add multiple consultant profiles, each with their own settings and history
+- **Two-phase search**: Find organizations first, then optionally enrich with contacts
+- **Cooldown filter**: Avoids showing the same organization repeatedly (configurable period)
 - **Search history**: All past searches are saved and searchable
 - **Email delivery**: Send formatted results to any email address
 - **Configurable**: Customize sectors, signals, keywords, and filters per client
@@ -90,7 +111,7 @@ To run your first search:
 ├── database.py         # SQLite data layer
 ├── profile_manager.py  # Client profile management
 ├── config/
-│   └── default_profile.json  # Seed data for first client
+│   └── default_profile.json  # Profile template (customize before first run)
 ├── .env.example        # API key template
 └── requirements.txt    # Python dependencies
 ```
