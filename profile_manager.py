@@ -8,9 +8,21 @@ from database import (
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_PROFILE_PATH = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "config", "default_profile.json"
-)
+_config_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config")
+CUSTOM_PROFILE_PATH = os.path.join(_config_dir, "nurit_profile.json")
+DEFAULT_PROFILE_PATH = os.path.join(_config_dir, "default_profile.json")
+
+
+def _find_profile_path() -> str | None:
+    for path in [CUSTOM_PROFILE_PATH, DEFAULT_PROFILE_PATH]:
+        if os.path.exists(path):
+            return path
+    # Also check for any custom *_profile.json
+    if os.path.isdir(_config_dir):
+        for f in os.listdir(_config_dir):
+            if f.endswith("_profile.json") and f != "default_profile.json":
+                return os.path.join(_config_dir, f)
+    return None
 
 
 def load_or_create_default_profile() -> int:
@@ -18,10 +30,11 @@ def load_or_create_default_profile() -> int:
     if clients:
         return clients[0]["id"]
 
-    if os.path.exists(DEFAULT_PROFILE_PATH):
-        client_id = seed_from_profile(DEFAULT_PROFILE_PATH)
+    profile_path = _find_profile_path()
+    if profile_path:
+        client_id = seed_from_profile(profile_path)
         if client_id:
-            logger.info("Seeded default profile: client_id=%d", client_id)
+            logger.info("Seeded profile from %s: client_id=%d", os.path.basename(profile_path), client_id)
             return client_id
 
     return create_client({"name": "Default Client"})

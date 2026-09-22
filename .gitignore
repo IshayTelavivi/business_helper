@@ -5,3 +5,5 @@ __pycache__/
 app.log
 *.pyc
 .DS_Store
+.deps_installed
+config/nurit_profile.json
