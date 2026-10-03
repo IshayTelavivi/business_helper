@@ -7,7 +7,7 @@ import anthropic
 
 logger = logging.getLogger(__name__)
 
-MODEL = "claude-sonnet-4-20250514"
+MODEL = "claude-sonnet-5-5"
 
 BATCH_SIZE = 20
 
@@ -24,7 +24,7 @@ def _parse_json_response(text: str) -> list | dict:
     return json.loads(text)
 
 
-def _call_claude(prompt: str, max_tokens: int = 4096) -> str:
+def _call_claude(prompt: str, max_tokens: int = 16000) -> str:
     client = _get_client()
     for attempt in range(3):
         try:
@@ -33,7 +33,18 @@ def _call_claude(prompt: str, max_tokens: int = 4096) -> str:
                 max_tokens=max_tokens,
                 messages=[{"role": "user", "content": prompt}],
             )
-            return message.content[0].text
+            if message.stop_reason == "refusal":
+                category = getattr(message.stop_details, "category", None)
+                raise RuntimeError(f"Claude declined the request (category: {category})")
+            # Thinking is on by default, so the text block is not always first.
+            text = next((b.text for b in message.content if b.type == "text"), None)
+            if message.stop_reason == "max_tokens":
+                logger.warning("Response hit max_tokens (%d); output may be truncated", max_tokens)
+            if text is None:
+                raise RuntimeError(f"No text block in response (stop_reason: {message.stop_reason})")
+            return text
+        except RuntimeError:
+            raise
         except anthropic.RateLimitError:
             if attempt == 2:
                 raise
@@ -111,7 +122,7 @@ def _score_batch(batch: list[dict], settings: dict, past_clients: list[str]) -> 
         results_text=results_text,
     )
 
-    response_text = _call_claude(prompt, max_tokens=4096)
+    response_text = _call_claude(prompt, max_tokens=16000)
     return _parse_json_response(response_text)
 
 
@@ -226,7 +237,7 @@ def generate_outreach(scored_results: list[dict], client_profile: dict) -> list[
     )
 
     try:
-        response_text = _call_claude(prompt, max_tokens=4096)
+        response_text = _call_claude(prompt, max_tokens=16000)
         outreach_data = _parse_json_response(response_text)
     except Exception as e:
         logger.error("Outreach generation failed: %s", e)
